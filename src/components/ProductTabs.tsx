@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Product, Review } from "@/types/product";
+import type { Review } from "@/lib/supabase/types";
 
 const tabs = [
   { id: "uso", label: "Como Usar" },
@@ -12,7 +12,9 @@ const tabs = [
 type TabId = (typeof tabs)[number]["id"];
 
 type ProductTabsProps = {
-  product: Product;
+  howToUse: string | null;
+  ingredients: string | null;
+  reviews: Review[];
 };
 
 function StarRating({ rating }: { rating: number }) {
@@ -36,23 +38,25 @@ function ReviewCard({ review }: { review: Review }) {
     <article className="border-b border-ink/10 py-5 last:border-0">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium">{review.author}</p>
-        <time className="text-xs text-ink/40" dateTime={review.date}>
-          {new Date(review.date).toLocaleDateString("pt-BR")}
+        <time className="text-xs text-ink/40" dateTime={review.created_at}>
+          {new Date(review.created_at).toLocaleDateString("pt-BR")}
         </time>
       </div>
       <div className="mt-2">
         <StarRating rating={review.rating} />
       </div>
-      <p className="mt-3 text-sm leading-relaxed text-ink/70">{review.comment}</p>
+      {review.comment && (
+        <p className="mt-3 text-sm leading-relaxed text-ink/70">{review.comment}</p>
+      )}
     </article>
   );
 }
 
-export function ProductTabs({ product }: ProductTabsProps) {
+export function ProductTabs({ howToUse, ingredients, reviews }: ProductTabsProps) {
   const [active, setActive] = useState<TabId>("uso");
   const avgRating =
-    product.reviews.length > 0
-      ? product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length
+    reviews.length > 0
+      ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : 0;
 
   return (
@@ -75,8 +79,8 @@ export function ProductTabs({ product }: ProductTabsProps) {
             }`}
           >
             {tab.label}
-            {tab.id === "avaliacoes" && product.reviews.length > 0 && (
-              <span className="ml-1.5 text-ink/40">({product.reviews.length})</span>
+            {tab.id === "avaliacoes" && reviews.length > 0 && (
+              <span className="ml-1.5 text-ink/40">({reviews.length})</span>
             )}
           </button>
         ))}
@@ -84,26 +88,32 @@ export function ProductTabs({ product }: ProductTabsProps) {
 
       <div className="px-1 py-6" role="tabpanel">
         {active === "uso" && (
-          <p className="text-sm leading-relaxed text-ink/80">{product.howToUse}</p>
+          <p className="text-sm leading-relaxed text-ink/80">
+            {howToUse || "Sem instruções de uso cadastradas."}
+          </p>
         )}
         {active === "ingredientes" && (
-          <p className="text-sm leading-relaxed text-ink/80">{product.ingredients}</p>
+          <p className="text-sm leading-relaxed text-ink/80">
+            {ingredients || "Lista de ingredientes não disponível."}
+          </p>
         )}
         {active === "avaliacoes" && (
           <div>
-            {product.reviews.length > 0 && (
+            {reviews.length > 0 && (
               <div className="mb-6 flex items-center gap-3">
                 <StarRating rating={Math.round(avgRating)} />
                 <span className="text-sm text-ink/60">
-                  {avgRating.toFixed(1)} · {product.reviews.length}{" "}
-                  {product.reviews.length === 1 ? "avaliação" : "avaliações"}
+                  {avgRating.toFixed(1)} · {reviews.length}{" "}
+                  {reviews.length === 1 ? "avaliação" : "avaliações"}
                 </span>
               </div>
             )}
-            {product.reviews.length === 0 ? (
-              <p className="text-sm text-ink/50">Ainda não há avaliações para este produto.</p>
+            {reviews.length === 0 ? (
+              <p className="text-sm text-ink/50">
+                Ainda não há avaliações para este produto.
+              </p>
             ) : (
-              product.reviews.map((review) => (
+              reviews.map((review) => (
                 <ReviewCard key={review.id} review={review} />
               ))
             )}

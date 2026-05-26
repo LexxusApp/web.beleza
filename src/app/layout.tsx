@@ -1,7 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { CartProvider } from "@/context/CartContext";
-import { CartDrawer } from "@/components/CartDrawer";
-import { Navbar } from "@/components/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,13 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className="antialiased">
-        <CartProvider>
-          <Navbar />
-          <main>{children}</main>
-          <CartDrawer />
-        </CartProvider>
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

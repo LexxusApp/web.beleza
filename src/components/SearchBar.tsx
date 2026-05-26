@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ProductImage } from "./ProductImage";
 import { useEffect, useRef, useState } from "react";
-import { formatPrice, searchProducts } from "@/data/products";
+import { ProductImage } from "./ProductImage";
+import { formatPrice, productImageUrl, type Product } from "@/lib/supabase/types";
 
 type SearchBarProps = {
   onClose?: () => void;
@@ -12,12 +12,40 @@ type SearchBarProps = {
 
 export function SearchBar({ onClose, autoFocus }: SearchBarProps) {
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const results = searchProducts(query);
 
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus();
   }, [autoFocus]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setResults([]);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const json = await res.json();
+        if (active) setResults(json.results ?? []);
+      } catch {
+        if (active) setResults([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }, 200);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [query]);
 
   return (
     <div className="relative mx-auto max-w-2xl">
@@ -60,7 +88,9 @@ export function SearchBar({ onClose, autoFocus }: SearchBarProps) {
           className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,400px)] overflow-y-auto rounded-2xl border border-ink/10 bg-white shadow-xl"
           role="listbox"
         >
-          {results.length === 0 ? (
+          {loading && results.length === 0 ? (
+            <li className="px-5 py-6 text-center text-sm text-ink/50">Buscando...</li>
+          ) : results.length === 0 ? (
             <li className="px-5 py-6 text-center text-sm text-ink/50">
               Nenhum produto encontrado para &ldquo;{query}&rdquo;
             </li>
@@ -74,7 +104,7 @@ export function SearchBar({ onClose, autoFocus }: SearchBarProps) {
                 >
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-blush">
                     <ProductImage
-                      src={product.image}
+                      src={productImageUrl(product)}
                       alt={product.name}
                       className="object-cover"
                       sizes="56px"
@@ -98,4 +128,3 @@ export function SearchBar({ onClose, autoFocus }: SearchBarProps) {
     </div>
   );
 }
-

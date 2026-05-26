@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ProductImage } from "./ProductImage";
 import { useEffect } from "react";
-import { formatPrice } from "@/data/products";
+import { ProductImage } from "./ProductImage";
 import { useCart } from "@/context/CartContext";
+import { formatPrice, productImageUrl } from "@/lib/supabase/types";
 
 export function CartDrawer() {
   const {
@@ -86,7 +86,7 @@ export function CartDrawer() {
                     className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-blush"
                   >
                     <ProductImage
-                      src={product.image}
+                      src={productImageUrl(product)}
                       alt={product.name}
                       className="object-cover"
                       sizes="80px"
@@ -138,12 +138,13 @@ export function CartDrawer() {
               <span className="text-sm uppercase tracking-widest text-ink/60">Subtotal</span>
               <span className="text-lg font-medium">{formatPrice(totalPrice)}</span>
             </div>
-            <button
-              type="button"
+            <Link
+              href="/checkout"
+              onClick={closeCart}
               className="flex min-h-[52px] w-full items-center justify-center rounded-full bg-ink text-sm font-semibold uppercase tracking-widest text-white transition-transform active:scale-[0.98] hover:bg-ink/90"
             >
               Finalizar compra
-            </button>
+            </Link>
             <button
               type="button"
               onClick={closeCart}
